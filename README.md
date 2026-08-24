@@ -31,11 +31,20 @@ damit die Kalender-Abo-URL auch nach einem Saisonwechsel stabil bleibt.
 4. Diese URL im Kalender-Programm als Abo hinzufuegen:
 
    ```
-   https://raw.githubusercontent.com/<dein-github-user>/handball-ics-sync/main/THW_Kiel_III_Spielplan.ics
+   https://cdn.jsdelivr.net/gh/<dein-github-user>/handball-ics-sync@main/THW_Kiel_III_Spielplan.ics
    ```
 
    (Google Calendar: "Von URL", Outlook: "Kalender abonnieren", Apple Kalender:
    "Neues Kalenderabo" - dort ggf. `webcal://` statt `https://` verwenden.)
+
+   Hinweis: Bewusst die jsDelivr-URL statt des direkten
+   `raw.githubusercontent.com`-Links, da GitHub `.ics`-Dateien dort faelschlich
+   mit `Content-Type: text/plain` statt `text/calendar` ausliefert - das lehnt
+   Google Calendars "Von URL hinzufuegen" oft mit einer generischen
+   "Oops, we couldn't add this calendar"-Fehlermeldung ab. jsDelivr spiegelt
+   denselben Dateiinhalt, setzt aber den korrekten `text/calendar`-Header.
+   jsDelivr cached bis zu ca. 12h, was sich mit dem taeglichen Auto-Update-Workflow
+   vertraegt.
 
 ## Push auf GitHub (einmalig)
 
