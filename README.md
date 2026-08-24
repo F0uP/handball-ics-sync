@@ -28,23 +28,53 @@ damit die Kalender-Abo-URL auch nach einem Saisonwechsel stabil bleibt.
    bereits selbst, das reicht in der Regel aus).
 3. Einmal manuell ueber den "Run workflow"-Button im Actions-Tab anstossen,
    damit die Datei im Repo landet.
-4. Diese URL im Kalender-Programm als Abo hinzufuegen:
+4. Repo bei Netlify verbinden, damit die Datei ueber eine stabile URL ganz ohne
+   CDN-Bot-Schutz ausgeliefert wird (siehe naechster Abschnitt, warum das
+   noetig ist).
+5. Diese URL im Kalender-Programm als Abo hinzufuegen:
 
    ```
-   https://cdn.jsdelivr.net/gh/<dein-github-user>/handball-ics-sync@main/THW_Kiel_III_Spielplan.ics
+   https://<dein-netlify-site-name>.netlify.app/THW_Kiel_III_Spielplan.ics
    ```
 
    (Google Calendar: "Von URL", Outlook: "Kalender abonnieren", Apple Kalender:
    "Neues Kalenderabo" - dort ggf. `webcal://` statt `https://` verwenden.)
 
-   Hinweis: Bewusst die jsDelivr-URL statt des direkten
-   `raw.githubusercontent.com`-Links, da GitHub `.ics`-Dateien dort faelschlich
-   mit `Content-Type: text/plain` statt `text/calendar` ausliefert - das lehnt
-   Google Calendars "Von URL hinzufuegen" oft mit einer generischen
-   "Oops, we couldn't add this calendar"-Fehlermeldung ab. jsDelivr spiegelt
-   denselben Dateiinhalt, setzt aber den korrekten `text/calendar`-Header.
-   jsDelivr cached bis zu ca. 12h, was sich mit dem taeglichen Auto-Update-Workflow
-   vertraegt.
+### Warum Netlify statt raw.githubusercontent.com / jsDelivr
+
+`raw.githubusercontent.com` liefert `.ics`-Dateien mit `Content-Type: text/plain`
+statt `text/calendar` aus - das allein reicht schon, damit Google Calendars
+"Von URL hinzufuegen" mit einer generischen "Oops, we couldn't add this
+calendar"-Fehlermeldung ablehnt. Als Alternative mit korrektem Content-Type
+wurde jsDelivr getestet (spiegelt GitHub-Repos 1:1) - das scheiterte aber
+mit demselben Fehler. Vermutung: Cloudflare (hinter jsDelivr) und Fastly
+(hinter raw.githubusercontent.com) stufen Anfragen aus Google-Cloud-IP-Bereichen
+teils als Bot-Traffic ein und blocken sie, weil echte Nutzer selten von dort
+browsen. Ein Test mit unterschiedlichen User-Agents zeigte keine Blockade,
+das schliesst IP-basierte Bot-Erkennung aber nicht aus. Ein zum Vergleich
+getesteter Feed auf einer ungeschuetzten WordPress-Seite (ohne CDN/Bot-Schutz)
+funktionierte dagegen anstandslos. Netlify hat standardmaessig keinen
+vergleichbar aggressiven Bot-Schutz und deployt automatisch bei jedem Push,
+verpackt sich also nahtlos in den taeglichen Auto-Update-Workflow.
+
+`netlify.toml` in diesem Repo setzt zusaetzlich explizit den korrekten
+`Content-Type: text/calendar`-Header fuer die `.ics`-Datei, unabhaengig von
+Netlifys eigener MIME-Type-Erkennung.
+
+**Einrichtung bei Netlify:**
+
+1. Auf [app.netlify.com](https://app.netlify.com) mit dem GitHub-Account einloggen.
+2. "Add new site" -> "Import an existing project" -> GitHub auswaehlen,
+   Repo `handball-ics-sync` verbinden.
+3. Build-Einstellungen leer lassen (kein Build-Command, Publish-Directory `.`
+   - steht bereits in `netlify.toml`).
+4. Deploy anstossen. Netlify vergibt eine Standard-URL wie
+   `https://<zufaelliger-name>.netlify.app` (unter "Site settings" -> "Change
+   site name" laesst sich ein sprechenderer Name setzen).
+5. Die `.ics`-Datei ist danach direkt unter
+   `https://<site-name>.netlify.app/THW_Kiel_III_Spielplan.ics` erreichbar
+   und wird bei jedem Push (auch durch den taeglichen GitHub-Actions-Workflow)
+   automatisch neu deployt.
 
 ## Push auf GitHub (einmalig)
 
